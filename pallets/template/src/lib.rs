@@ -16,9 +16,9 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use codec::{Decode, Encode};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use codec::{Decode, Encode};
 	use sp_std::vec::Vec;
 
 	#[pallet::pallet]
@@ -33,7 +33,7 @@ pub mod pallet {
 		pub amount: u128,
 		pub certifier: AccountId,
 	}
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, Pool<T::AccountId>>;
@@ -41,10 +41,11 @@ pub mod pallet {
 	// #[pallet::storage]
 	// #[pallet::getter(fn next_pool)]
 	// pub type NextPool<T: Config> = StorageValue<_, u32>;
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn pool_stakes)]
-	pub type PoolStakes<T: Config> = StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::AccountId, u128>;
+	pub type PoolStakes<T: Config> =
+		StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::AccountId, u128>;
 	// ----------------------------------------------
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -79,28 +80,35 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]	
-		pub fn create_pool(origin: OriginFor<T>, name: Vec<u8>, description: Vec<u8>, amount: u128) -> DispatchResult {
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn create_pool(
+			origin: OriginFor<T>,
+			name: Vec<u8>,
+			description: Vec<u8>,
+			amount: u128,
+		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			if Pools::<T>::contains_key(who.clone()) {
 				return Err(Error::<T>::NoneValue.into());
 			}
 
-			Pools::<T>::insert(who.clone(), Pool {
-				name,
-				description,
-				amount,
-				certifier: who,
-			});
+			Pools::<T>::insert(
+				who.clone(),
+				Pool { name, description, amount, certifier: who.clone() },
+			);
 
-			// Self::deposit_event(Event::PoolStored { who });
+			Self::deposit_event(Event::PoolStored { who });
 			Ok(())
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]	
-		pub fn stake_pool(origin: OriginFor<T>, certifier: T::AccountId, amount: u128) -> DispatchResult {
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn stake_pool(
+			origin: OriginFor<T>,
+			certifier: T::AccountId,
+			amount: u128,
+		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			// if the pool doesn't exist, return error
@@ -109,9 +117,9 @@ pub mod pallet {
 			}
 
 			// TODO: this is only setting the value we need to add the amount to the existing value
-			PoolStakes::<T>::set(certifier, who, Some(amount));
-			
-			// Self::deposit_event(Event::PoolStored { who });
+			PoolStakes::<T>::set(certifier, who.clone(), Some(amount));
+
+			Self::deposit_event(Event::PoolStored { who });
 			Ok(())
 		}
 	}
