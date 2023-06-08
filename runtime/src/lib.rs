@@ -270,7 +270,7 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the pallet-wakweli in pallets/template.
 impl pallet_wakweli::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_wakweli::weights::SubstrateWeight<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

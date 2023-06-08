@@ -121,7 +121,7 @@ pub mod pallet {
 				return Err(Error::<T>::NoneValue.into());
 			}
 
-			// TODO: this is only setting the value we need to add the amount to the existing value
+			// TODO: this line only stores the value it doesn't actually transfer the amount
 			PoolStakes::<T>::set(certifier, who.clone(), Some(amount));
 
 			Self::deposit_event(Event::PoolStored { who });
